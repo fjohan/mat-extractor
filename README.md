@@ -1,6 +1,6 @@
 # MAT Extractor: Audio + LI Channel
 
-A desktop GUI tool for extracting audio and articulatory (LI) data from MATLAB v5 `.mat` files, with optional export to **Excel**, **plain text**, and **WAV**.
+A desktop **GUI and CLI** tool for extracting audio and articulatory (LI) data from MATLAB v5 `.mat` files, with optional export to **Excel**, **plain text**, and **WAV**.
 
 This tool is designed for speech and articulography workflows where:
 - One struct contains **audio** (e.g. 16 kHz)
@@ -11,7 +11,8 @@ This tool is designed for speech and articulography workflows where:
 
 ## Features
 
-- ✅ Tkinter-based GUI (no command line required)
+- ✅ Tkinter-based **GUI application**
+- ✅ **Command-line (CLI)** version for batch / scripting use
 - ✅ Process a **single `.mat` file** or a **folder of `.mat` files**
 - ✅ Extract:
   - Audio signal from one struct (default index `0`)
@@ -52,9 +53,11 @@ The default configuration assumes:
 - LI at index `4`
 - LI channel `3`
 
-All of these can be changed in the GUI.
+All of these can be changed in both the GUI and CLI.
 
 ---
+
+# GUI VERSION
 
 ## GUI Overview
 
@@ -87,7 +90,7 @@ All of these can be changed in the GUI.
 
 #### WAV (.wav)
 Options:
-- **Resample LI to audio rate** (recommended for alignment)
+- **Resample LI to audio rate** (poly_reflect)
 - **Write one combined WAV** (2 channels: audio + LI)
 - Or write **separate WAV files** if resampling is disabled
 
@@ -101,6 +104,59 @@ Alignment options (when resampling):
 
 ---
 
+# CLI VERSION
+
+The CLI provides the **same functionality and defaults** as the GUI, but is suitable for:
+- Batch processing
+- Remote servers / SSH
+- Reproducible scripted pipelines
+
+## CLI Defaults (same as GUI)
+
+- Audio struct index: `0`
+- LI struct index: `4`
+- LI channel: `3`
+- Excel output: **ON**
+- Plaintext output: **ON**
+- WAV output: **ON**
+- Resampling: **OFF**
+- Combined WAV: **OFF**
+- WAV format: `float32`
+- Alignment: `trim`
+- Variable name: auto-detect
+
+## CLI Usage
+
+### Basic usage (default behavior)
+```bash
+python mat_extractor_cli.py T001.mat
+```
+
+### Process a folder of `.mat` files
+```bash
+python mat_extractor_cli.py data/
+```
+
+### Enable resampling and combined WAV
+```bash
+python mat_extractor_cli.py T001.mat --resample-li --combined-wav
+```
+
+### Disable specific outputs
+```bash
+python mat_extractor_cli.py T001.mat --no-excel --no-wav
+```
+
+### Change indices or channel
+```bash
+python mat_extractor_cli.py T001.mat \
+  --audio-index 0 \
+  --li-index 4 \
+  --li-channel 3
+```
+
+---
+
 ## Output Files
 
 For an input file `T001.mat`, outputs may include:
@@ -108,47 +164,42 @@ For an input file `T001.mat`, outputs may include:
 ```
 T001.xlsx
 T001.txt
-T001_combined.wav
 T001_AUDIO.wav
 T001_LI_ch.wav
 T001_LI_ch_rs.wav
+T001_combined.wav
 ```
 
 Exact files depend on selected options.
 
 ---
 
-## Recommended Defaults
-
-For most articulography use cases:
-- ✅ Excel: ON
-- ✅ Plaintext: ON
-- ✅ WAV: ON
-- ❌ Combined WAV: OFF
-- ❌ Resampling: OFF (enable only when alignment is needed)
-- WAV format: **float32**
-
----
-
 ## Installation (Source Version)
-
-If running from source:
 
 ```bash
 pip install numpy scipy
 pip install pandas openpyxl   # only if Excel output is needed
+```
+
+### Run GUI
+```bash
 python mat_extractor_gui.py
+```
+
+### Run CLI
+```bash
+python mat_extractor_cli.py T001.mat
 ```
 
 ---
 
 ## Standalone Builds
 
-Pre-built standalone executables can be created using **Nuitka** and **GitHub Actions**:
-- No Python installation required on client machines
-- Available for Windows, macOS, and Linux
+The tool can be packaged as **standalone executables** (no Python required) using:
+- **Nuitka**
+- **GitHub Actions** (Windows, macOS, Linux)
 
-(See build workflow documentation if you are packaging the app.)
+This is the recommended way to distribute the tool to end users.
 
 ---
 
@@ -156,8 +207,8 @@ Pre-built standalone executables can be created using **Nuitka** and **GitHub Ac
 
 - MATLAB **v5** `.mat` files are supported
 - MATLAB **v7.3 (HDF5)** files are not currently supported
-- Combined WAV output requires resampling (same sample rate)
-- Large files may produce large Excel or text outputs
+- Combined WAV output requires resampling
+- Very large files may produce large Excel or text outputs
 
 ---
 
@@ -169,9 +220,9 @@ Modify and redistribute as needed for your project.
 ---
 
 If you need:
-- Different sensors
-- Multiple LI channels
-- Automatic detection by `NAME` instead of index
-- CSV/JSON output
+- Automatic detection by `NAME == "AUDIO"` / `"LI"`
+- Multiple LI channels at once
+- CSV / JSON output
+- Time-aligned export tables
 
 …the tool can be easily extended.
