@@ -59,6 +59,8 @@ All of these can be changed in both the GUI and CLI.
 
 # GUI VERSION
 
+![Sample](img/mat-extractor.png)
+
 ## GUI Overview
 
 ### Input
