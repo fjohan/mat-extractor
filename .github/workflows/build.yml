@@ -11,7 +11,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -34,14 +33,26 @@ jobs:
         uses: Nuitka/Nuitka-Action@main
         with:
           script-name: mat_extractor_gui.py
-          mode: app
+
+          # IMPORTANT: for Tkinter support
           enable-plugins: tk-inter
-          nuitka-options: |
-            --assume-yes-for-downloads
-            --follow-imports
-            --onefile
-            --output-dir=build
-            --windows-console-mode=disable
+
+          # Standalone folder build is usually most reliable for scientific stacks.
+          mode: standalone
+
+          # Map common Nuitka flags -> action inputs (drop the leading "--")
+          follow-imports: true
+          assume-yes-for-downloads: true
+
+          # Output goes to ./build by default in the action examples;
+          # set explicitly if you like:
+          output-dir: build
+
+          # Optional: make a single-file executable (can be huge with SciPy)
+          onefile: true
+
+          # Optional: Windows only - hide console window for GUI apps
+          windows-console-mode: disable
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
