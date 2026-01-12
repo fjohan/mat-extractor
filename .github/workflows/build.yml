@@ -1,0 +1,49 @@
+name: Build (Nuitka)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Nuitka-Action handles installing Python, Nuitka, and compiling.
+      - name: Build with Nuitka
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          script-name: mat_extractor_gui.py
+          # One-file is convenient for distribution; remove if you prefer folder dist.
+          onefile: true
+          # For GUI apps; prevents console window on Windows.
+          disable-console: true
+          # Tkinter support (often auto-detected, but explicit is safer)
+          enable-plugins: tk-inter
+          # Include your dependencies (Action will install requirements if given)
+          requirements-file: requirements.txt
+          # Extra Nuitka options (optional, but often useful)
+          nuitka-options: |
+            --assume-yes-for-downloads
+            --follow-imports
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ matrix.os }}
+          path: |
+            build/**
+            dist/**
+            *.exe
+            *.bin
+            *.app
