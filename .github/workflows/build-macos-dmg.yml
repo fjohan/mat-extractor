@@ -1,0 +1,76 @@
+name: macOS DMG (Nuitka, ad-hoc signed)
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            **/requirements*.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt
+
+      - name: Build .app with Nuitka
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          script-name: mat_extractor_gui.py
+          mode: app
+          enable-plugins: tk-inter
+          follow-imports: true
+          assume-yes-for-downloads: true
+          output-dir: build
+
+      - name: Locate .app bundle
+        id: locate_app
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build -maxdepth 5 -name '*.app' -print -quit)"
+          if [[ -z "${APP_PATH}" ]]; then
+            echo "No .app found under build/"
+            find build -maxdepth 7 -print
+            exit 1
+          fi
+          echo "Found app: ${APP_PATH}"
+          echo "app_path=${APP_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Ad-hoc sign .app (no Apple Dev ID)
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="${{ steps.locate_app.outputs.app_path }}"
+          # Ad-hoc signing: "-s -" signs without an identity; --deep signs embedded dylibs/frameworks. :contentReference[oaicite:2]{index=2}
+          codesign --force --deep -s - "$APP"
+          # Optional verification
+          codesign -dv --verbose=2 "$APP" || true
+
+      - name: Create DMG
+        uses: L-Super/create-dmg-actions@v1.0.3
+        with:
+          dmg_name: "MAT-Extractor"
+          src_dir: "${{ steps.locate_app.outputs.app_path }}"
+        # This action creates a DMG from the .app. :contentReference[oaicite:3]{index=3}
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-DMG
+          path: |
+            *.dmg
+          retention-days: 7
