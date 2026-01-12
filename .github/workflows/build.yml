@@ -49,7 +49,7 @@ jobs:
           output-dir: build
 
           # Optional: make a single-file executable (can be huge with SciPy)
-          onefile: true
+          # onefile: true
 
           # Optional: Windows only - hide console window for GUI apps
           windows-console-mode: disable
